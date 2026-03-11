@@ -24,16 +24,9 @@ db = client[os.environ['DB_NAME']]
 # Create the main app without a prefix
 app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],   # allow all for now
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
 
 # Define Models
 class ServerScanRequest(BaseModel):
@@ -401,6 +394,13 @@ async def get_favorites():
 # Include the router in the main app
 app.include_router(api_router)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configure logging
 logging.basicConfig(
