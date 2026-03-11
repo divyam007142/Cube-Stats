@@ -162,8 +162,8 @@ const PlayersCard = ({ serverData }) => {
           )}
 
           {onlinePlayers > 0 && playerList.length === 0 && (
-            <div className="mt-4 text-center text-muted-foreground text-sm">
-              <p className="mb-3">Player names not visible</p>
+            <div className="mt-4 text-center text-muted-foreground text-sm space-y-3">
+              <p className="mb-3">Player names not visible on this server</p>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -193,6 +193,9 @@ const PlayersCard = ({ serverData }) => {
                   Lookup
                 </button>
               </div>
+              <p className="text-xs text-muted-foreground/70 mt-2">
+                Try known usernames: <button onClick={() => { setManualUsername('Notch'); }} className="text-primary hover:underline">Notch</button>, <button onClick={() => { setManualUsername('jeb_'); }} className="text-primary hover:underline">jeb_</button>, <button onClick={() => { setManualUsername('Dinnerbone'); }} className="text-primary hover:underline">Dinnerbone</button>
+              </p>
             </div>
           )}
         </div>
@@ -247,9 +250,16 @@ const PlayersCard = ({ serverData }) => {
                   <ul className="list-disc list-inside space-y-1 pl-4">
                     <li>Verify the username is spelled correctly</li>
                     <li>Check if this is a Java Edition username (not Bedrock)</li>
-                    <li>Ensure the player has a valid Mojang account</li>
+                    <li>This server might be in offline mode (cracked server)</li>
+                    <li>Player might be using Xbox gamertag (Bedrock Edition)</li>
                     <li>Try searching on <a href={`https://namemc.com/search?q=${encodeURIComponent(selectedPlayer)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">NameMC</a></li>
                   </ul>
+                  
+                  <div className="mt-4 p-3 bg-primary/10 border border-primary/30 rounded-lg">
+                    <p className="text-xs font-mono">
+                      <strong className="text-primary">ℹ️ Note:</strong> Player lookups only work for Java Edition players with official Mojang accounts. Bedrock/Xbox players and offline mode servers won't show stats.
+                    </p>
+                  </div>
                 </div>
               </div>
             ) : playerStats ? (
