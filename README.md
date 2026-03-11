@@ -451,8 +451,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 Made with ♡ by **Lunar Vibes**
 
 - Website: [cubestats.io](https://cubestats.io)
-- GitHub: [@lunarvibes](https://github.com/lunarvibes)
-- Twitter: [@lunar_vibes](https://twitter.com/lunar_vibes)
+- GitHub: [@lunarvibes](https://github.com/divyam007142)
+- Portfolio: [@lunar_vibes](https://lunar-vibes-portfolio.netlify.app)
 
 ---
 
