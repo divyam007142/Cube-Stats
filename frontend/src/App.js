@@ -20,6 +20,10 @@ import ErrorDisplay from './components/ErrorDisplay';
 import ServerComparison from './components/ServerComparison';
 import ServerNotes from './components/ServerNotes';
 import BulkExport from './components/BulkExport';
+import PerformanceChart from './components/PerformanceChart';
+import AdvancedFilters from './components/AdvancedFilters';
+import BatchScan from './components/BatchScan';
+import ServerCategories from './components/ServerCategories';
 import { Button } from './components/ui/button';
 import { Switch } from './components/ui/switch';
 
@@ -123,6 +127,12 @@ function AppContent() {
         fetchHistory();
         fetchUptime(ip, port);
         checkIfFavorited(ip, port);
+        
+        // Save performance data for chart
+        if (window.savePerformanceData) {
+          const players = response.data.data?.players?.online || 0;
+          window.savePerformanceData(response.data.latency, players);
+        }
       } else {
         setError('Server is offline or does not exist');
         setLatency(response.data.latency);
@@ -375,6 +385,14 @@ function AppContent() {
             Get detailed information about any Minecraft server
           </p>
           <ServerSearchBar onScan={scanServer} isLoading={loading} />
+          
+          {/* Batch Scan */}
+          <div className="mt-8">
+            <BatchScan onResults={(results) => {
+              console.log('Batch scan results:', results);
+              toast.success(`Batch scan complete: ${results.filter(r => r.online).length}/${results.length} online`);
+            }} />
+          </div>
         </motion.div>
 
         {/* Side Panels */}
@@ -504,8 +522,14 @@ function AppContent() {
                 <PluginsCard serverData={serverData} />
               </div>
               <div className="lg:col-span-1">
-                <ServerNotes serverId={`${serverData.ip}:${serverData.port}`} />
+                <ServerCategories serverIp={serverData.ip} serverPort={serverData.port} />
               </div>
+            </div>
+
+            {/* Performance & Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+              <PerformanceChart serverIp={serverData.ip} serverPort={serverData.port} />
+              <ServerNotes serverId={`${serverData.ip}:${serverData.port}`} />
             </div>
 
             {/* Raw JSON Viewer */}
