@@ -28,7 +28,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://minecraft-cube-stats.netlify.app",
-        "http://localhost:3000"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -404,13 +403,6 @@ async def get_favorites():
 # Include the router in the main app
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Configure logging
 logging.basicConfig(
