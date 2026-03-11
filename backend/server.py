@@ -140,6 +140,57 @@ async def get_server_history():
         logging.error(f"Error fetching history: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch history")
 
+@api_router.get("/player/{username}")
+async def get_player_stats(username: str):
+    """Fetch player statistics from Mojang API"""
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            # Fetch UUID from Mojang API
+            uuid_response = await client.get(
+                f"https://api.mojang.com/users/profiles/minecraft/{username}"
+            )
+            
+            if uuid_response.status_code == 404:
+                raise HTTPException(status_code=404, detail="Player not found")
+            
+            if uuid_response.status_code != 200:
+                raise HTTPException(status_code=502, detail="Failed to fetch player data from Mojang")
+            
+            uuid_data = uuid_response.json()
+            uuid = uuid_data['id']
+            
+            # Format UUID with dashes
+            formatted_uuid = f"{uuid[:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:]}"
+            
+            # Fetch profile data
+            try:
+                profile_response = await client.get(
+                    f"https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+                )
+                profile_data = profile_response.json() if profile_response.status_code == 200 else {}
+            except:
+                profile_data = {}
+            
+            return {
+                "success": True,
+                "name": uuid_data['name'],
+                "uuid": formatted_uuid,
+                "uuid_raw": uuid,
+                "skin": f"https://crafatar.com/renders/body/{uuid}?overlay",
+                "head": f"https://crafatar.com/avatars/{uuid}?overlay",
+                "legacy": profile_data.get('legacy', False)
+            }
+            
+    except HTTPException:
+        raise
+    except httpx.TimeoutException:
+        raise HTTPException(status_code=504, detail="Request timeout while fetching player data")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=502, detail=f"Network error: {str(e)}")
+    except Exception as e:
+        logging.error(f"Error fetching player stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch player statistics")
+
 @api_router.get("/server/uptime/{ip}/{port}")
 async def get_server_uptime(ip: str, port: int):
     """Calculate server uptime based on scan history"""

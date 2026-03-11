@@ -18,35 +18,31 @@ const PlayersCard = ({ serverData }) => {
     setSelectedPlayer(playerName);
     
     try {
-      // Fetch UUID from Mojang API
-      const uuidResponse = await fetch(`https://api.mojang.com/users/profiles/minecraft/${playerName}`);
+      const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+      const API = `${BACKEND_URL}/api`;
       
-      if (!uuidResponse.ok) {
-        setPlayerStats({ error: 'Player not found' });
+      // Fetch player data from our backend
+      const response = await fetch(`${API}/player/${encodeURIComponent(playerName)}`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          setPlayerStats({ error: 'Player not found' });
+        } else {
+          setPlayerStats({ error: 'Failed to load player data' });
+        }
         setLoadingStats(false);
         return;
       }
       
-      const uuidData = await uuidResponse.json();
-      const uuid = uuidData.id;
-      
-      // Format UUID with dashes
-      const formattedUuid = uuid.replace(
-        /(\w{8})(\w{4})(\w{4})(\w{4})(\w{12})/,
-        '$1-$2-$3-$4-$5'
-      );
-      
-      // Fetch profile data
-      const profileResponse = await fetch(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`);
-      const profileData = await profileResponse.json();
+      const data = await response.json();
       
       setPlayerStats({
-        name: uuidData.name,
-        uuid: formattedUuid,
-        skin: `https://crafatar.com/renders/body/${uuid}?overlay`,
-        head: `https://crafatar.com/avatars/${uuid}?overlay`,
-        nameHistory: uuidData.name,
-        legacy: profileData.legacy || false
+        name: data.name,
+        uuid: data.uuid,
+        uuid_raw: data.uuid_raw,
+        skin: data.skin,
+        head: data.head,
+        legacy: data.legacy || false
       });
     } catch (error) {
       console.error('Error fetching player stats:', error);
@@ -213,14 +209,14 @@ const PlayersCard = ({ serverData }) => {
                   <h4 className="text-sm font-mono text-muted-foreground mb-3">SKIN DOWNLOADS</h4>
                   <div className="flex gap-2">
                     <a
-                      href={`https://crafatar.com/skins/${playerStats.uuid.replace(/-/g, '')}`}
+                      href={`https://crafatar.com/skins/${playerStats.uuid_raw || playerStats.uuid.replace(/-/g, '')}`}
                       download
                       className="flex-1 text-center bg-primary/10 hover:bg-primary/20 border border-primary/30 p-2 rounded font-mono text-xs transition-colors"
                     >
                       Download Skin
                     </a>
                     <a
-                      href={`https://crafatar.com/capes/${playerStats.uuid.replace(/-/g, '')}`}
+                      href={`https://crafatar.com/capes/${playerStats.uuid_raw || playerStats.uuid.replace(/-/g, '')}`}
                       download
                       className="flex-1 text-center bg-primary/10 hover:bg-primary/20 border border-primary/30 p-2 rounded font-mono text-xs transition-colors"
                     >
