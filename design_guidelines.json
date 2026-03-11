@@ -1,0 +1,201 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "MC Server Scout",
+      "vibe": "Futuristic, Professional, Developer Console, Immersive",
+      "emotional_tone": "Precision, Technical, Hacker/Console",
+      "theme": "dark",
+      "mode_strategy": "Dark Mode Only (with optional toggle, but prioritized for Dark)"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "\"JetBrains Mono\", \"Fira Code\", monospace",
+        "body": "\"Inter\", system-ui, sans-serif",
+        "accent": "\"Space Grotesk\", sans-serif"
+      },
+      "scale": {
+        "hero": "text-5xl md:text-7xl font-bold tracking-tighter",
+        "h1": "text-4xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-medium",
+        "body_large": "text-lg",
+        "body_base": "text-base",
+        "caption": "text-sm text-muted-foreground",
+        "tiny": "text-xs font-mono uppercase tracking-widest"
+      }
+    },
+    "colors": {
+      "palette": {
+        "background": {
+          "default": "#050505",
+          "surface": "#0a0a0a",
+          "surface_hover": "#121212",
+          "overlay": "rgba(5, 5, 5, 0.8)"
+        },
+        "primary": {
+          "default": "#00ffa3",
+          "hover": "#00cc82",
+          "glow": "0 0 20px rgba(0, 255, 163, 0.5)"
+        },
+        "secondary": {
+          "default": "#7000ff",
+          "hover": "#5a00cc",
+          "glow": "0 0 20px rgba(112, 0, 255, 0.5)"
+        },
+        "accent": {
+          "cyan": "#00d4ff",
+          "magenta": "#ff00d4",
+          "yellow": "#ffd700"
+        },
+        "status": {
+          "online": "#00ffa3",
+          "offline": "#ff0055",
+          "warning": "#ffaa00",
+          "info": "#00d4ff"
+        },
+        "text": {
+          "primary": "#ffffff",
+          "secondary": "#a1a1aa",
+          "muted": "#52525b",
+          "inverse": "#000000"
+        },
+        "border": {
+          "default": "#27272a",
+          "active": "#00ffa3"
+        }
+      },
+      "minecraft_codes": {
+        "§0": "#000000",
+        "§1": "#0000AA",
+        "§2": "#00AA00",
+        "§3": "#00AAAA",
+        "§4": "#AA0000",
+        "§5": "#AA00AA",
+        "§6": "#FFAA00",
+        "§7": "#AAAAAA",
+        "§8": "#555555",
+        "§9": "#5555FF",
+        "§a": "#55FF55",
+        "§b": "#55FFFF",
+        "§c": "#FF5555",
+        "§d": "#FF55FF",
+        "§e": "#FFFF55",
+        "§f": "#FFFFFF"
+      }
+    },
+    "spacing": {
+      "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+      "section_padding": "py-12 md:py-24",
+      "grid_gap": "gap-6 md:gap-8",
+      "component_padding": "p-6 md:p-8"
+    },
+    "layout": {
+      "grid_system": "Bento Grid (Asymmetric)",
+      "modes": {
+        "dashboard": "grid grid-cols-1 md:grid-cols-12 gap-6",
+        "stats": "grid grid-cols-2 md:grid-cols-4 gap-4"
+      },
+      "z_index": {
+        "base": "z-0",
+        "overlay": "z-10",
+        "modal": "z-50",
+        "toast": "z-100",
+        "cursor": "z-[9999]"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-black font-bold hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,255,163,0.4)] transition-all duration-300 rounded-none clip-path-polygon",
+        "secondary": "border border-border bg-transparent hover:bg-secondary/10 hover:border-secondary text-primary transition-all duration-300 rounded-none",
+        "icon": "p-2 rounded-full hover:bg-white/10 transition-colors"
+      },
+      "cards": {
+        "base": "bg-black/40 backdrop-blur-xl border border-white/10 rounded-xl overflow-hidden shadow-2xl hover:border-primary/50 transition-colors duration-300",
+        "glass": "bg-white/5 backdrop-blur-md border border-white/10 shadow-lg",
+        "neon_border": "relative p-[1px] bg-gradient-to-r from-primary via-secondary to-primary rounded-xl"
+      },
+      "inputs": {
+        "search": "bg-black/50 border-2 border-white/20 focus:border-primary text-xl p-6 w-full rounded-lg placeholder:text-white/20 transition-all font-mono",
+        "standard": "bg-secondary/20 border border-white/10 focus:border-primary rounded-md px-4 py-2"
+      },
+      "status_indicators": {
+        "pulse": "relative flex h-3 w-3 items-center justify-center rounded-full"
+      }
+    },
+    "motion": {
+      "libraries": ["framer-motion"],
+      "defaults": {
+        "duration": 0.4,
+        "ease": [0.22, 1, 0.36, 1]
+      },
+      "animations": {
+        "fade_in": {
+          "initial": { "opacity": 0, "y": 20 },
+          "animate": { "opacity": 1, "y": 0 },
+          "exit": { "opacity": 0, "y": -20 }
+        },
+        "radar_sweep": {
+          "animate": { "rotate": 360 },
+          "transition": { "repeat": "Infinity", "duration": 2, "ease": "linear" }
+        },
+        "glitch": "keyframe animation for text distortion on hover/error"
+      }
+    },
+    "visual_enhancers": {
+      "glassmorphism": "backdrop-blur-xl bg-black/60 border border-white/10",
+      "gradients": "bg-gradient-to-br from-primary/20 to-secondary/20",
+      "shadows": "shadow-[0_0_50px_-12px_rgba(0,255,163,0.25)]",
+      "textures": "bg-[url('/grid-pattern.svg')] opacity-10",
+      "glows": "drop-shadow-[0_0_10px_rgba(0,255,163,0.5)]"
+    },
+    "accessibility": {
+      "contrast": "Maintain WCAG AA (4.5:1) for text",
+      "focus": "ring-2 ring-primary ring-offset-2 ring-offset-black",
+      "reduced_motion": "respect-media-query"
+    }
+  },
+  "assets": {
+    "images": {
+      "backgrounds": [
+        "https://images.unsplash.com/photo-1762278804729-13d330fad71a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjh8MHwxfHNlYXJjaHwyfHxjeWJlcnB1bmslMjBhYnN0cmFjdCUyMHRlY2hub2xvZ3klMjBiYWNrZ3JvdW5kJTIwZGFya3xlbnwwfHx8fDE3NzMyNDcyNDl8MA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1739054730201-4b6463484e3c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxzZXJ2ZXIlMjByYWNrJTIwbGlnaHRzJTIwZGF0YSUyMGNlbnRlciUyMGRhcmt8ZW58MHx8fHwxNzczMjQ3MjUxfDA&ixlib=rb-4.1.0&q=85"
+      ],
+      "placeholders": {
+        "server_icon": "https://eu.ui-avatars.com/api/?name=MC&background=0a0a0a&color=00ffa3&size=128",
+        "player_avatar": "https://crafatar.com/avatars/{uuid}?size=64&overlay"
+      }
+    },
+    "icons": {
+      "libraries": ["lucide-react"],
+      "custom": "Use SVG for Minecraft specific icons (sword, pickaxe) if needed"
+    }
+  },
+  "implementation_instructions": {
+    "api_integration": {
+      "endpoint": "https://api.mcsrvstat.us/2/{ip}",
+      "handling": "Use React Query or SWR for caching. Handle loading, error, and offline states explicitly."
+    },
+    "parsing": {
+      "motd": "Create a utility function to parse Minecraft color codes (§a, §b...) into HTML spans with corresponding colors defined in colors.minecraft_codes.",
+      "images": "Server icons usually come as Base64. If not, use placeholder."
+    },
+    "layout_structure": {
+      "header": "Fixed, glassmorphism, contains Logo and 'History' trigger.",
+      "hero": "Centered Search Bar with 'Scan' button. Background should have the abstract tech image with heavy overlay.",
+      "results": "Animate in when data is fetched. Use Bento Grid layout.",
+      "footer": "Simple, tech-styled, links to GitHub/About."
+    }
+  },
+  "universal_guidelines": [
+    "Do not get biased or lean towards generic AI designs.",
+    "Fusion over Imitation: Mix 3+ design references into something unique.",
+    "Emotion First: Every design decision maps to a feeling, not a trend.",
+    "Content is king: Tell a story. Every page must feel emotionally directed.",
+    "Zoom in: Use close-ups and bold focus on essential details.",
+    "Negative Space: Value the empty areas; they give breathing room.",
+    "Contrast: Use light vs. dark, rough vs. smooth contrasts.",
+    "Avoid the Center-Everything Disease: Asymmetry creates tension.",
+    "Avoid Gradient Overload: More than 20% gradient feels like decoration.",
+    "All interactive elements MUST include data-testid attribute."
+  ]
+}
