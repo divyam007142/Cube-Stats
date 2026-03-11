@@ -142,44 +142,88 @@ async def get_server_history():
 
 @api_router.get("/player/{username}")
 async def get_player_stats(username: str):
-    """Fetch player statistics from Mojang API"""
+    """Fetch player statistics from multiple sources"""
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            # Fetch UUID from Mojang API
-            uuid_response = await client.get(
-                f"https://api.mojang.com/users/profiles/minecraft/{username}"
-            )
-            
-            if uuid_response.status_code == 404:
-                raise HTTPException(status_code=404, detail="Player not found")
-            
-            if uuid_response.status_code != 200:
-                raise HTTPException(status_code=502, detail="Failed to fetch player data from Mojang")
-            
-            uuid_data = uuid_response.json()
-            uuid = uuid_data['id']
-            
-            # Format UUID with dashes
-            formatted_uuid = f"{uuid[:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:]}"
-            
-            # Fetch profile data
+            # Try Mojang API first
             try:
-                profile_response = await client.get(
-                    f"https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+                uuid_response = await client.get(
+                    f"https://api.mojang.com/users/profiles/minecraft/{username}"
                 )
-                profile_data = profile_response.json() if profile_response.status_code == 200 else {}
-            except:
-                profile_data = {}
+                
+                if uuid_response.status_code == 200:
+                    uuid_data = uuid_response.json()
+                    uuid = uuid_data['id']
+                    formatted_uuid = f"{uuid[:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:]}"
+                    
+                    # Try to get additional data from PlayerDB
+                    playerdb_data = {}
+                    try:
+                        playerdb_response = await client.get(
+                            f"https://playerdb.co/api/player/minecraft/{username}"
+                        )
+                        if playerdb_response.status_code == 200:
+                            playerdb_data = playerdb_response.json().get('data', {}).get('player', {})
+                    except:
+                        pass
+                    
+                    # Try SessionServer for profile
+                    try:
+                        profile_response = await client.get(
+                            f"https://sessionserver.mojang.com/session/minecraft/profile/{uuid}"
+                        )
+                        profile_data = profile_response.json() if profile_response.status_code == 200 else {}
+                    except:
+                        profile_data = {}
+                    
+                    return {
+                        "success": True,
+                        "source": "mojang",
+                        "name": uuid_data['name'],
+                        "uuid": formatted_uuid,
+                        "uuid_raw": uuid,
+                        "skin": f"https://crafatar.com/renders/body/{uuid}?overlay",
+                        "head": f"https://crafatar.com/avatars/{uuid}?overlay",
+                        "legacy": profile_data.get('legacy', False),
+                        "username_history": playerdb_data.get('meta', {}).get('name_history', [])
+                    }
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code != 404:
+                    raise
             
-            return {
-                "success": True,
-                "name": uuid_data['name'],
-                "uuid": formatted_uuid,
-                "uuid_raw": uuid,
-                "skin": f"https://crafatar.com/renders/body/{uuid}?overlay",
-                "head": f"https://crafatar.com/avatars/{uuid}?overlay",
-                "legacy": profile_data.get('legacy', False)
-            }
+            # Fallback to PlayerDB API
+            try:
+                playerdb_response = await client.get(
+                    f"https://playerdb.co/api/player/minecraft/{username}"
+                )
+                
+                if playerdb_response.status_code == 200:
+                    data = playerdb_response.json()
+                    if data.get('success') and data.get('data', {}).get('player'):
+                        player = data['data']['player']
+                        uuid = player.get('id', player.get('raw_id', ''))
+                        
+                        # Format UUID if needed
+                        if len(uuid) == 32:
+                            formatted_uuid = f"{uuid[:8]}-{uuid[8:12]}-{uuid[12:16]}-{uuid[16:20]}-{uuid[20:]}"
+                        else:
+                            formatted_uuid = uuid
+                        
+                        return {
+                            "success": True,
+                            "source": "playerdb",
+                            "name": player.get('username', username),
+                            "uuid": formatted_uuid,
+                            "uuid_raw": uuid.replace('-', ''),
+                            "skin": f"https://crafatar.com/renders/body/{uuid.replace('-', '')}?overlay",
+                            "head": f"https://crafatar.com/avatars/{uuid.replace('-', '')}?overlay",
+                            "legacy": False,
+                            "username_history": player.get('meta', {}).get('name_history', [])
+                        }
+            except:
+                pass
+            
+            raise HTTPException(status_code=404, detail="Player not found in any database")
             
     except HTTPException:
         raise
@@ -190,6 +234,40 @@ async def get_player_stats(username: str):
     except Exception as e:
         logging.error(f"Error fetching player stats: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to fetch player statistics")
+
+@api_router.get("/player/{username}/hypixel")
+async def get_hypixel_stats(username: str, api_key: Optional[str] = None):
+    """Fetch Hypixel player statistics"""
+    try:
+        # First get UUID from Mojang
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            uuid_response = await client.get(
+                f"https://api.mojang.com/users/profiles/minecraft/{username}"
+            )
+            
+            if uuid_response.status_code != 200:
+                raise HTTPException(status_code=404, detail="Player not found")
+            
+            uuid = uuid_response.json()['id']
+            
+            # Note: Hypixel API requires an API key
+            # For demo purposes, return player lookup info
+            return {
+                "success": True,
+                "message": "Hypixel stats require an API key. Get yours at https://api.hypixel.net",
+                "uuid": uuid,
+                "player": username,
+                "links": {
+                    "hypixel_profile": f"https://plancke.io/hypixel/player/stats/{username}",
+                    "hypixel_skyblock": f"https://sky.shiiyu.moe/stats/{username}",
+                    "hypixel_guild": f"https://plancke.io/hypixel/guild/player/{username}"
+                }
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error fetching Hypixel stats: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch Hypixel statistics")
 
 @api_router.get("/server/uptime/{ip}/{port}")
 async def get_server_uptime(ip: str, port: int):

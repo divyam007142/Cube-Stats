@@ -280,7 +280,14 @@ const PlayersCard = ({ serverData }) => {
                   <div className="flex-1 space-y-4">
                     <div>
                       <label className="text-sm text-muted-foreground font-mono">USERNAME</label>
-                      <p className="text-2xl font-bold font-mono text-primary">{playerStats.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-2xl font-bold font-mono text-primary">{playerStats.name}</p>
+                        {playerStats.source && (
+                          <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-1 rounded">
+                            via {playerStats.source}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -316,6 +323,24 @@ const PlayersCard = ({ serverData }) => {
                   >
                     <ExternalLink className="h-4 w-4" />
                     Mine.ly Profile
+                  </a>
+                  <a
+                    href={`https://plancke.io/hypixel/player/stats/${playerStats.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 p-3 rounded-lg font-mono text-sm transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Hypixel Stats
+                  </a>
+                  <a
+                    href={`https://laby.net/@${playerStats.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 bg-accent/10 hover:bg-accent/20 border border-accent/30 p-3 rounded-lg font-mono text-sm transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    LabyMod
                   </a>
                 </div>
 
