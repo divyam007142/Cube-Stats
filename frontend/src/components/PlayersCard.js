@@ -12,6 +12,7 @@ const PlayersCard = ({ serverData }) => {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [playerStats, setPlayerStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [manualUsername, setManualUsername] = useState('');
 
   const fetchPlayerStats = async (playerName) => {
     setLoadingStats(true);
@@ -21,20 +22,56 @@ const PlayersCard = ({ serverData }) => {
       const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
       const API = `${BACKEND_URL}/api`;
       
+      console.log('Fetching player stats for:', playerName);
+      
       // Fetch player data from our backend
       const response = await fetch(`${API}/player/${encodeURIComponent(playerName)}`);
       
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error response:', errorData);
+        
+        let errorMessage = 'Failed to load player data';
+        let errorDetails = '';
+        
         if (response.status === 404) {
-          setPlayerStats({ error: 'Player not found' });
+          errorMessage = 'Player not found';
+          errorDetails = `Username "${playerName}" does not exist in Mojang's database`;
+        } else if (response.status === 504) {
+          errorMessage = 'Request timeout';
+          errorDetails = 'Mojang API is taking too long to respond';
+        } else if (response.status === 502) {
+          errorMessage = 'API Error';
+          errorDetails = errorData.detail || 'Unable to connect to Mojang API';
         } else {
-          setPlayerStats({ error: 'Failed to load player data' });
+          errorMessage = 'Error';
+          errorDetails = errorData.detail || `HTTP ${response.status}: ${response.statusText}`;
         }
+        
+        setPlayerStats({ 
+          error: errorMessage,
+          errorDetails: errorDetails,
+          username: playerName,
+          statusCode: response.status
+        });
         setLoadingStats(false);
         return;
       }
       
       const data = await response.json();
+      console.log('Player data received:', data);
+      
+      if (!data.success) {
+        setPlayerStats({ 
+          error: 'Invalid response',
+          errorDetails: 'Backend returned unsuccessful response',
+          username: playerName
+        });
+        setLoadingStats(false);
+        return;
+      }
       
       setPlayerStats({
         name: data.name,
@@ -46,7 +83,11 @@ const PlayersCard = ({ serverData }) => {
       });
     } catch (error) {
       console.error('Error fetching player stats:', error);
-      setPlayerStats({ error: 'Failed to load player data' });
+      setPlayerStats({ 
+        error: 'Network error',
+        errorDetails: error.message || 'Failed to connect to backend API',
+        username: playerName
+      });
     } finally {
       setLoadingStats(false);
     }
@@ -122,7 +163,36 @@ const PlayersCard = ({ serverData }) => {
 
           {onlinePlayers > 0 && playerList.length === 0 && (
             <div className="mt-4 text-center text-muted-foreground text-sm">
-              <p>Player names not visible</p>
+              <p className="mb-3">Player names not visible</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Enter username to lookup..."
+                  value={manualUsername}
+                  onChange={(e) => setManualUsername(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && manualUsername.trim()) {
+                      fetchPlayerStats(manualUsername.trim());
+                      setManualUsername('');
+                    }
+                  }}
+                  className="flex-1 bg-white/5 border border-white/10 rounded px-3 py-2 text-sm font-mono focus:border-primary focus:outline-none"
+                  data-testid="manual-username-input"
+                />
+                <button
+                  onClick={() => {
+                    if (manualUsername.trim()) {
+                      fetchPlayerStats(manualUsername.trim());
+                      setManualUsername('');
+                    }
+                  }}
+                  disabled={!manualUsername.trim()}
+                  className="bg-primary text-black px-4 py-2 rounded font-mono text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-testid="lookup-player-button"
+                >
+                  Lookup
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -144,9 +214,43 @@ const PlayersCard = ({ serverData }) => {
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
               </div>
             ) : playerStats?.error ? (
-              <div className="text-center py-12">
-                <p className="text-destructive text-lg mb-2">{playerStats.error}</p>
-                <p className="text-muted-foreground text-sm">Unable to fetch player data from Mojang API</p>
+              <div className="py-8 px-6">
+                <div className="text-center mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/20 mb-4">
+                    <User className="h-8 w-8 text-destructive" />
+                  </div>
+                  <h3 className="text-destructive text-2xl font-bold mb-2">{playerStats.error}</h3>
+                  <p className="text-muted-foreground">{playerStats.errorDetails}</p>
+                </div>
+                
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Username:</span>
+                    <span className="font-mono">{playerStats.username || selectedPlayer}</span>
+                  </div>
+                  {playerStats.statusCode && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Status Code:</span>
+                      <span className="font-mono text-destructive">{playerStats.statusCode}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">API Endpoint:</span>
+                    <span className="font-mono text-xs truncate max-w-[300px]">
+                      {process.env.REACT_APP_BACKEND_URL}/api/player/{selectedPlayer}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6 text-sm text-muted-foreground space-y-2">
+                  <p className="font-mono text-primary">Troubleshooting:</p>
+                  <ul className="list-disc list-inside space-y-1 pl-4">
+                    <li>Verify the username is spelled correctly</li>
+                    <li>Check if this is a Java Edition username (not Bedrock)</li>
+                    <li>Ensure the player has a valid Mojang account</li>
+                    <li>Try searching on <a href={`https://namemc.com/search?q=${encodeURIComponent(selectedPlayer)}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">NameMC</a></li>
+                  </ul>
+                </div>
               </div>
             ) : playerStats ? (
               <div className="space-y-6">
