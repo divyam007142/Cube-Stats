@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Star, History as HistoryIcon, Github, RefreshCw, Download, Share2, Clock, TrendingUp, BarChart3 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Star, History as HistoryIcon, Github, RefreshCw, Download, Share2, Clock, TrendingUp, BarChart3, Sun, Moon } from 'lucide-react';
 import axios from 'axios';
 import { Toaster, toast } from 'sonner';
 import '@/index.css';
 import '@/App.css';
 
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import ServerSearchBar from './components/ServerSearchBar';
 import StatusCard from './components/StatusCard';
 import PlayersCard from './components/PlayersCard';
@@ -18,13 +19,15 @@ import LoadingSkeleton from './components/LoadingSkeleton';
 import ErrorDisplay from './components/ErrorDisplay';
 import ServerComparison from './components/ServerComparison';
 import ServerNotes from './components/ServerNotes';
+import BulkExport from './components/BulkExport';
 import { Button } from './components/ui/button';
 import { Switch } from './components/ui/switch';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-function App() {
+function AppContent() {
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [serverData, setServerData] = useState(null);
   const [error, setError] = useState(null);
@@ -33,10 +36,13 @@ function App() {
   const [showHistory, setShowHistory] = useState(false);
   const [showFavorites, setShowFavorites] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
+  const [showBulkExport, setShowBulkExport] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [currentServer, setCurrentServer] = useState({ ip: '', port: 25565 });
+  const [latency, setLatency] = useState(null);
+  const [uptime, setUptime] = useState(null);
 
   useEffect(() => {
     fetchHistory();
@@ -74,13 +80,25 @@ function App() {
     }
   };
 
+  const fetchUptime = async (ip, port) => {
+    try {
+      const response = await axios.get(`${API}/server/uptime/${ip}/${port}`);
+      setUptime(response.data);
+    } catch (err) {
+      console.error('Failed to fetch uptime:', err);
+    }
+  };
+
   const scanServer = async (ip, port) => {
     setLoading(true);
     setError(null);
     setServerData(null);
+    setLatency(null);
+    setUptime(null);
     setShowHistory(false);
     setShowFavorites(false);
     setShowComparison(false);
+    setShowBulkExport(false);
     setCurrentServer({ ip, port });
 
     try {
@@ -88,12 +106,15 @@ function App() {
 
       if (response.data.success && response.data.online) {
         setServerData(response.data.data);
+        setLatency(response.data.latency);
         setLastUpdated(new Date());
         toast.success('Server scan completed!');
         fetchHistory();
+        fetchUptime(ip, port);
         checkIfFavorited(ip, port);
       } else {
         setError('Server is offline or does not exist');
+        setLatency(response.data.latency);
         toast.error('Server is offline');
       }
     } catch (err) {
@@ -116,7 +137,9 @@ function App() {
 
       if (response.data.success && response.data.online) {
         setServerData(response.data.data);
+        setLatency(response.data.latency);
         setLastUpdated(new Date());
+        fetchUptime(currentServer.ip, currentServer.port);
         toast.success('Stats refreshed!');
       }
     } catch (err) {
@@ -208,19 +231,24 @@ function App() {
     return `${hours}h ago`;
   };
 
+  const bgClass = theme === 'dark' ? 'bg-[#050505]' : 'bg-gray-50';
+  const textClass = theme === 'dark' ? 'text-white' : 'text-gray-900';
+
   return (
-    <div className="min-h-screen bg-[#050505] text-white relative overflow-hidden" data-testid="main-app">
-      <Toaster position="top-right" theme="dark" richColors />
+    <div className={`min-h-screen ${bgClass} ${textClass} relative overflow-hidden transition-colors duration-300`} data-testid="main-app">
+      <Toaster position="top-right" theme={theme} richColors />
       
       {/* Background Pattern */}
-      <div className="fixed inset-0 grid-pattern opacity-20" />
-      
-      {/* Gradient Orbs */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-float" />
-      <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />
+      {theme === 'dark' && (
+        <>
+          <div className="fixed inset-0 grid-pattern opacity-20" />
+          <div className="fixed top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-[120px] animate-float" />
+          <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] animate-float" style={{ animationDelay: '1s' }} />
+        </>
+      )}
 
       {/* Header */}
-      <header className="relative z-10 border-b border-white/10 backdrop-blur-xl bg-black/40" data-testid="app-header">
+      <header className={`relative z-10 border-b ${theme === 'dark' ? 'border-white/10 backdrop-blur-xl bg-black/40' : 'border-gray-200 bg-white/80 backdrop-blur-xl'}`} data-testid="app-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <motion.div
@@ -243,13 +271,36 @@ function App() {
             >
               <Button
                 variant="outline"
+                onClick={toggleTheme}
+                data-testid="theme-toggle-button"
+                className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'}`}
+              >
+                {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowBulkExport(!showBulkExport);
+                  setShowComparison(false);
+                  setShowHistory(false);
+                  setShowFavorites(false);
+                }}
+                data-testid="bulk-export-toggle-button"
+                className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'}`}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowComparison(!showComparison);
                   setShowHistory(false);
                   setShowFavorites(false);
+                  setShowBulkExport(false);
                 }}
                 data-testid="comparison-toggle-button"
-                className="border-primary/30 hover:border-primary hover:bg-primary/10"
+                className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'}`}
               >
                 <BarChart3 className="h-4 w-4 mr-2" />
                 Compare
@@ -260,9 +311,10 @@ function App() {
                   setShowHistory(!showHistory);
                   setShowFavorites(false);
                   setShowComparison(false);
+                  setShowBulkExport(false);
                 }}
                 data-testid="history-toggle-button"
-                className="border-primary/30 hover:border-primary hover:bg-primary/10"
+                className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'}`}
               >
                 <HistoryIcon className="h-4 w-4 mr-2" />
                 History
@@ -273,9 +325,10 @@ function App() {
                   setShowFavorites(!showFavorites);
                   setShowHistory(false);
                   setShowComparison(false);
+                  setShowBulkExport(false);
                 }}
                 data-testid="favorites-toggle-button"
-                className="border-primary/30 hover:border-primary hover:bg-primary/10"
+                className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'}`}
               >
                 <Star className="h-4 w-4 mr-2" />
                 Favorites
@@ -296,14 +349,14 @@ function App() {
           <h2 className="text-4xl md:text-6xl font-bold font-mono mb-4 tracking-tighter">
             Scan Minecraft Servers
           </h2>
-          <p className="text-muted-foreground text-lg mb-8">
+          <p className={`text-lg mb-8 ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
             Get detailed information about any Minecraft server
           </p>
           <ServerSearchBar onScan={scanServer} isLoading={loading} />
         </motion.div>
 
         {/* Side Panels */}
-        {(showHistory || showFavorites || showComparison) && (
+        {(showHistory || showFavorites || showComparison || showBulkExport) && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -329,6 +382,12 @@ function App() {
                 onSelectServer={scanServer}
               />
             )}
+            {showBulkExport && (
+              <BulkExport
+                favorites={favorites}
+                history={history}
+              />
+            )}
           </motion.div>
         )}
 
@@ -345,14 +404,14 @@ function App() {
           <div className="space-y-6">
             {/* Action Buttons */}
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   onClick={toggleFavorite}
                   variant={isFavorited ? 'default' : 'outline'}
                   data-testid="favorite-toggle-button"
                   className={isFavorited 
                     ? 'bg-primary text-black hover:bg-primary/90 font-mono' 
-                    : 'border-primary/30 hover:border-primary hover:bg-primary/10 font-mono'
+                    : `${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'} font-mono`
                   }
                 >
                   <Star className={`h-4 w-4 mr-2 ${isFavorited ? 'fill-current' : ''}`} />
@@ -363,7 +422,7 @@ function App() {
                   onClick={refreshCurrentServer}
                   variant="outline"
                   data-testid="refresh-button"
-                  className="border-primary/30 hover:border-primary hover:bg-primary/10 font-mono"
+                  className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'} font-mono`}
                 >
                   <RefreshCw className="h-4 w-4 mr-2" />
                   REFRESH
@@ -373,7 +432,7 @@ function App() {
                   onClick={shareServer}
                   variant="outline"
                   data-testid="share-button"
-                  className="border-primary/30 hover:border-primary hover:bg-primary/10 font-mono"
+                  className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'} font-mono`}
                 >
                   <Share2 className="h-4 w-4 mr-2" />
                   SHARE
@@ -383,7 +442,7 @@ function App() {
                   onClick={exportServerData}
                   variant="outline"
                   data-testid="export-button"
-                  className="border-primary/30 hover:border-primary hover:bg-primary/10 font-mono"
+                  className={`${theme === 'dark' ? 'border-primary/30 hover:border-primary hover:bg-primary/10' : 'border-gray-300 hover:border-primary hover:bg-gray-100'} font-mono`}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   EXPORT
@@ -392,13 +451,13 @@ function App() {
 
               <div className="flex items-center gap-3">
                 {lastUpdated && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground font-mono">
+                  <div className={`flex items-center gap-2 text-sm font-mono ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
                     <Clock className="h-4 w-4" />
                     <span>Updated {getTimeSinceUpdate()}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground font-mono">Auto-refresh</span>
+                  <span className={`text-sm font-mono ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>Auto-refresh</span>
                   <Switch
                     checked={autoRefresh}
                     onCheckedChange={setAutoRefresh}
@@ -411,7 +470,7 @@ function App() {
             {/* Bento Grid Layout */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
-                <StatusCard serverData={serverData} />
+                <StatusCard serverData={serverData} latency={latency} uptime={uptime} />
               </div>
               <div className="lg:col-span-1">
                 <PlayersCard serverData={serverData} />
@@ -434,10 +493,10 @@ function App() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 backdrop-blur-xl bg-black/40 mt-20" data-testid="app-footer">
+      <footer className={`relative z-10 border-t ${theme === 'dark' ? 'border-white/10 backdrop-blur-xl bg-black/40' : 'border-gray-200 bg-white/80 backdrop-blur-xl'} mt-20`} data-testid="app-footer">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-muted-foreground text-sm font-mono">
+            <p className={`text-sm font-mono ${theme === 'dark' ? 'text-muted-foreground' : 'text-gray-600'}`}>
               © 2026 Cube Stats. Made with ♡ by Lunar Vibes
             </p>
             <div className="flex items-center gap-4">
@@ -445,7 +504,7 @@ function App() {
                 href="https://github.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className={`${theme === 'dark' ? 'text-muted-foreground hover:text-primary' : 'text-gray-600 hover:text-primary'} transition-colors`}
               >
                 <Github className="h-5 w-5" />
               </a>
@@ -454,6 +513,14 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
 

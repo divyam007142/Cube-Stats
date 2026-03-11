@@ -1,9 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Activity, Clock, Wifi, WifiOff } from 'lucide-react';
+import { Activity, Clock, Wifi, WifiOff, Zap, TrendingUp } from 'lucide-react';
 
-const StatusCard = ({ serverData }) => {
+const StatusCard = ({ serverData, latency, uptime }) => {
   const isOnline = serverData?.online;
+
+  const getLatencyColor = (ms) => {
+    if (ms < 100) return 'text-primary';
+    if (ms < 200) return 'text-accent';
+    if (ms < 500) return 'text-yellow-400';
+    return 'text-destructive';
+  };
+
+  const getLatencyStatus = (ms) => {
+    if (ms < 100) return 'Excellent';
+    if (ms < 200) return 'Good';
+    if (ms < 500) return 'Fair';
+    return 'Poor';
+  };
 
   return (
     <motion.div
@@ -50,6 +64,40 @@ const StatusCard = ({ serverData }) => {
             </span>
           </div>
         </div>
+
+        {latency !== null && latency !== undefined && (
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground flex items-center gap-2">
+              <Zap className="h-4 w-4" />
+              Latency
+            </span>
+            <div className="text-right">
+              <span className={`font-bold font-mono text-lg ${getLatencyColor(latency)}`}>
+                {Math.round(latency)}ms
+              </span>
+              <p className={`text-xs ${getLatencyColor(latency)}`}>
+                {getLatencyStatus(latency)}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {uptime && uptime.uptime_percentage !== null && (
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Uptime (30d)
+            </span>
+            <div className="text-right">
+              <span className="font-bold font-mono text-lg text-primary">
+                {uptime.uptime_percentage}%
+              </span>
+              <p className="text-xs text-muted-foreground">
+                {uptime.successful_scans}/{uptime.total_scans} scans
+              </p>
+            </div>
+          </div>
+        )}
 
         {isOnline && serverData.ip && (
           <div className="flex items-center justify-between">
