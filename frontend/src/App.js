@@ -24,6 +24,7 @@ import PerformanceChart from './components/PerformanceChart';
 import AdvancedFilters from './components/AdvancedFilters';
 import BatchScan from './components/BatchScan';
 import ServerCategories from './components/ServerCategories';
+import PlayerActivityLog from './components/PlayerActivityLog';
 import { Button } from './components/ui/button';
 import { Switch } from './components/ui/switch';
 
@@ -529,6 +530,15 @@ function AppContent() {
             {/* Performance & Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
               <PerformanceChart serverIp={serverData.ip} serverPort={serverData.port} />
+              <PlayerActivityLog 
+                serverIp={serverData.ip} 
+                serverPort={serverData.port}
+                currentPlayers={serverData.players?.list || []}
+              />
+            </div>
+
+            {/* Notes */}
+            <div className="mt-6">
               <ServerNotes serverId={`${serverData.ip}:${serverData.port}`} />
             </div>
 
