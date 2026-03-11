@@ -43,11 +43,22 @@ function AppContent() {
   const [currentServer, setCurrentServer] = useState({ ip: '', port: 25565 });
   const [latency, setLatency] = useState(null);
   const [uptime, setUptime] = useState(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     fetchHistory();
     fetchFavorites();
   }, []);
+
+  // Force re-render every 10 seconds to update timestamp
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (lastUpdated) {
+        forceUpdate(prev => prev + 1);
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [lastUpdated]);
 
   // Auto-refresh logic
   useEffect(() => {
@@ -223,12 +234,23 @@ function AppContent() {
 
   const getTimeSinceUpdate = () => {
     if (!lastUpdated) return '';
-    const seconds = Math.floor((new Date() - lastUpdated) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
+    const now = new Date();
+    const seconds = Math.floor((now - lastUpdated) / 1000);
+    
+    if (seconds < 10) return 'just now';
+    if (seconds < 60) return `${seconds} seconds ago`;
+    
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes === 1) return '1 minute ago';
+    if (minutes < 60) return `${minutes} minutes ago`;
+    
     const hours = Math.floor(minutes / 60);
-    return `${hours}h ago`;
+    if (hours === 1) return '1 hour ago';
+    if (hours < 24) return `${hours} hours ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
   };
 
   const bgClass = theme === 'dark' ? 'bg-[#050505]' : 'bg-gray-50';

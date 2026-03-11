@@ -82,7 +82,7 @@ const StatusCard = ({ serverData, latency, uptime }) => {
           </div>
         )}
 
-        {uptime && uptime.uptime_percentage !== null && (
+        {uptime && uptime.uptime_percentage !== null && uptime.total_scans > 0 && (
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
@@ -90,10 +90,10 @@ const StatusCard = ({ serverData, latency, uptime }) => {
             </span>
             <div className="text-right">
               <span className="font-bold font-mono text-lg text-primary">
-                {uptime.uptime_percentage}%
+                {uptime.uptime_percentage.toFixed(1)}%
               </span>
               <p className="text-xs text-muted-foreground">
-                {uptime.successful_scans}/{uptime.total_scans} scans
+                {uptime.successful_scans} of {uptime.total_scans} checks
               </p>
             </div>
           </div>
